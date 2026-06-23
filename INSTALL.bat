@@ -67,7 +67,4 @@ echo.
 echo Run your project with:
 echo     python main.py
 echo.
-echo Or if your file is grab.py:
-echo     python grab.py
-echo.
 cmd /k
