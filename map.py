@@ -8,6 +8,9 @@ class GridMap:
             [".", ".", ".", ".", "F"]
         ]
 
+        self.player = (0, 0)
+        self.goal = (4, 4)
+
     def display(self):
         for row in self.grid:
             print(" ".join(row))
