@@ -2,13 +2,11 @@ import time
 
 from map import GridMap
 from perceptron import PerceptronAgent
-from analysis import analyze
 
 
-def run_simulation():
+def run_simulation(show=True):
 
     game_map = GridMap()
-
     agent = PerceptronAgent()
 
     visited_count = {}
@@ -18,15 +16,14 @@ def run_simulation():
 
     while step < max_step:
 
-        print("\n==========================")
-        print("Step :", step)
+        if show:
+            print("\n========================")
+            print(f"Step : {step}")
+            game_map.display()
+            print()
 
-        game_map.display()
-
-        visited_count[game_map.player] = visited_count.get(
-            game_map.player,
-            0
-        ) + 1
+        # 현재 위치 방문 기록
+        visited_count[game_map.player] = visited_count.get(game_map.player, 0) + 1
 
         move = agent.choose_move(
             game_map.player,
@@ -36,8 +33,12 @@ def run_simulation():
         )
 
         if move is None:
-            print("더 이상 이동 불가")
-            break
+
+            return {
+                "success": False,
+                "steps": step,
+                "visited": len(visited_count)
+            }
 
         direction = {
             "w": (-1, 0),
@@ -53,39 +54,37 @@ def run_simulation():
         nr = r + dr
         nc = c + dc
 
+        # 이동 전 위치 표시
         if game_map.grid[r][c] != "F":
             game_map.grid[r][c] = "*"
 
         game_map.player = (nr, nc)
 
+        # 목표 도착
         if game_map.player == game_map.goal:
 
             game_map.grid[nr][nc] = "S"
 
-            print("\n목표 도착!")
+            if show:
+                print("\n목표 도착!")
+                game_map.display()
+                print(f"\n이동 횟수 : {step+1}")
 
-            game_map.display()
-
-            analyze(
-                game_map.grid,
-                game_map.player,
-                game_map.goal,
-                step + 1
-            )
-
-            return
+            return {
+                "success": True,
+                "steps": step + 1,
+                "visited": len(visited_count)
+            }
 
         game_map.grid[nr][nc] = "S"
 
         step += 1
 
-        time.sleep(0.1)
+        if show:
+            time.sleep(0.15)
 
-    print("\n실패")
-
-    analyze(
-        game_map.grid,
-        game_map.player,
-        game_map.goal,
-        step
-    )
+    return {
+        "success": False,
+        "steps": step,
+        "visited": len(visited_count)
+    }
