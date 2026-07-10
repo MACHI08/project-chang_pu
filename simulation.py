@@ -1,58 +1,91 @@
+import time
+
 from map import GridMap
+from perceptron import PerceptronAgent
+from analysis import analyze
+
 
 def run_simulation():
+
     game_map = GridMap()
 
-    while True:
-        print("\n===== 현재 맵 =====")
+    agent = PerceptronAgent()
+
+    visited_count = {}
+
+    step = 0
+    max_step = 200
+
+    while step < max_step:
+
+        print("\n==========================")
+        print("Step :", step)
+
         game_map.display()
 
-        print(f"\n현재 위치 : {game_map.player}")
-        print(f"목표 위치 : {game_map.goal}")
+        visited_count[game_map.player] = visited_count.get(
+            game_map.player,
+            0
+        ) + 1
 
-        move = input("\n이동(W/A/S/D, 종료 Q) : ").lower()
+        move = agent.choose_move(
+            game_map.player,
+            game_map.goal,
+            game_map.grid,
+            visited_count
+        )
 
-        if move == "q":
+        if move is None:
+            print("더 이상 이동 불가")
             break
 
-        row, col = game_map.player
+        direction = {
+            "w": (-1, 0),
+            "s": (1, 0),
+            "a": (0, -1),
+            "d": (0, 1)
+        }
 
-        if move == "w":
-            row -= 1
-        elif move == "s":
-            row += 1
-        elif move == "a":
-            col -= 1
-        elif move == "d":
-            col += 1
-        else:
-            continue
+        dr, dc = direction[move]
 
-        # 맵 밖으로 못 나가게
-        if not (0 <= row < 5 and 0 <= col < 5):
-            print("맵 밖입니다.")
-            continue
+        r, c = game_map.player
 
-        # 장애물 확인
-        if game_map.grid[row][col] == "#":
-            print("장애물입니다.")
-            continue
+        nr = r + dr
+        nc = c + dc
 
-        # 기존 위치 지우기
-        old_r, old_c = game_map.player
-        game_map.grid[old_r][old_c] = "."
+        if game_map.grid[r][c] != "F":
+            game_map.grid[r][c] = "*"
 
-        # 이동
-        game_map.player = (row, col)
+        game_map.player = (nr, nc)
 
-        # 목표 도착
         if game_map.player == game_map.goal:
-            game_map.grid[row][col] = "S"
 
-            print("\n===== 현재 맵 =====")
+            game_map.grid[nr][nc] = "S"
+
+            print("\n목표 도착!")
+
             game_map.display()
 
-            print("\n🎉 목표 도착!")
-            break
+            analyze(
+                game_map.grid,
+                game_map.player,
+                game_map.goal,
+                step + 1
+            )
 
-        game_map.grid[row][col] = "S"
+            return
+
+        game_map.grid[nr][nc] = "S"
+
+        step += 1
+
+        time.sleep(0.1)
+
+    print("\n실패")
+
+    analyze(
+        game_map.grid,
+        game_map.player,
+        game_map.goal,
+        step
+    )
