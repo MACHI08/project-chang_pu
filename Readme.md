@@ -13,7 +13,7 @@ project/
 
 │ perceptron.py        # 퍼셉트론
 
-│ pathfinding.py       # BFS
+│ pathfinding.py       # BFS (길찾기)
 
 │ simulation.py        # 1회 실험
 
