@@ -8,9 +8,12 @@ from pathfinding import bfs_steps
 def run_simulation(show=True):
 
     game_map = GridMap()
+    start_position = game_map.player
     agent = PerceptronAgent()
 
     visited_count = {}
+
+    previous_position = None
 
     step = 0
     max_step = 200
@@ -33,7 +36,8 @@ def run_simulation(show=True):
             game_map.player,
             game_map.goal,
             game_map.grid,
-            visited_count
+            visited_count,
+            previous_position
         )
 
         if move is None:
@@ -57,6 +61,7 @@ def run_simulation(show=True):
         if game_map.grid[r][c]!="F":
             game_map.grid[r][c]="*"
 
+        previous_position = game_map.player
         game_map.player=(nr,nc)
 
         if game_map.player==game_map.goal:
@@ -76,7 +81,7 @@ def run_simulation(show=True):
 
     bfs_result = bfs_steps(
         game_map.grid,
-        game_map.player if not success else game_map.goal,
+        start_position,
         game_map.goal
     )
 

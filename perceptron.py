@@ -72,7 +72,7 @@ class PerceptronAgent:
         return 1 if x > 0 else 0
 
 
-    def choose_move(self, player, goal, grid, visited_count):
+    def choose_move(self, player, goal, grid, visited_count, previous_position):
 
         directions = {
             "w": (-1,0),
@@ -96,6 +96,9 @@ class PerceptronAgent:
                 continue
 
             if grid[nr][nc] == "#":
+                continue
+            
+            if previous_position is not None and (nr, nc) == previous_position:
                 continue
 
             # 이동한 위치를 기준으로 입력 생성

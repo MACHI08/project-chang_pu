@@ -21,7 +21,7 @@ def run_experiments(count=100):
 
             success += 1
 
-            total_steps += result["steps"]
+            total_steps += result["perceptron_steps"]
 
     print("\n======================")
 
