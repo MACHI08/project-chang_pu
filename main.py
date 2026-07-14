@@ -1,27 +1,22 @@
-from simulation import run_simulation
 from experiment import run_experiments
+from simulation import run_simulation
 
 
 def main():
-
     while True:
-
         print("\n===== 메뉴 =====")
         print("1. 시뮬레이션")
-        print("2. 100회 실험")
+        print("2. 100회 실험 및 결과 시각화")
         print("0. 종료")
 
         choice = input("선택 : ")
 
         if choice == "1":
             run_simulation(show=True)
-
         elif choice == "2":
-            run_experiments(100)
-
+            run_experiments(count=100, save_visualization=True)
         elif choice == "0":
             break
-
         else:
             print("잘못된 입력입니다.")
 
