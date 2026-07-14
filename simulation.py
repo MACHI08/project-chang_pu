@@ -1,92 +1,116 @@
 from copy import deepcopy
+import time
 
 from map import GridMap
 from pathfinding import bfs_steps
-from perceptron import PerceptronAgent
+from perceptron import DIRECTIONS, DIRECTION_NAMES, PerceptronAgent
 
 
-DIRECTIONS = {
-    "w": (-1, 0),
-    "s": (1, 0),
-    "a": (0, -1),
-    "d": (0, 1),
-}
-
-DIRECTION_NAMES = {
-    "w": "up",
-    "s": "down",
-    "a": "left",
-    "d": "right",
-}
+def _display_position(position):
+    return position[0] + 1, position[1] + 1
 
 
-def _print_step(game_map, step, scores, move):
+def _print_step(game_map, step, decision):
     print("\n====================")
     print(f"STEP {step}")
-    print(f"현재 위치: {game_map.player}")
     game_map.display()
+    print(f"현재 위치: {_display_position(game_map.player)}")
+    print(f"목표 위치: {_display_position(game_map.goal)}")
+    print("인접 타일 입력과 선형 점수:")
 
-    if scores:
-        print("후보별 점수:")
-        for candidate, score in scores.items():
-            print(f"  {candidate} ({DIRECTION_NAMES[candidate]}): {score}")
+    for move in DIRECTIONS:
+        direction_name = DIRECTION_NAMES[move]
+        raw_position = decision["positions"][move]
+        tile_inputs = decision["inputs"][move]
+        reason = decision["excluded_reasons"][move]
+
+        if reason == "맵 밖":
+            print(
+                f"  {move} ({direction_name}): "
+                f"후보 제외 - {reason}"
+            )
+            continue
+
+        position = _display_position(raw_position)
+        if reason is not None:
+            print(
+                f"  {move} ({direction_name}) {position}: "
+                f"후보 제외 - {reason}"
+            )
+            continue
+
+        preference, distance = tile_inputs
+        score = decision["scores"][move]
+        print(
+            f"  {move} ({direction_name}) {position}: "
+            f"[선호도={preference:.3f}, 거리={distance:.3f}] "
+            f"점수={score:.3f}"
+        )
+
+    selected_move = decision["move"]
+    if selected_move is None:
+        print("최종 선택 방향: 없음 - 이동 가능한 미방문 칸 없음")
     else:
-        print("후보별 점수: 이동 가능한 후보 없음")
-
-    if move is None:
-        print("선택 방향: 없음")
-    else:
-        print(f"선택 방향: {move} ({DIRECTION_NAMES[move]})")
+        print(
+            f"최종 선택 방향: {selected_move} "
+            f"({DIRECTION_NAMES[selected_move]})"
+        )
 
 
-def run_simulation(show=True, max_steps=200, visit_penalty=2):
+def run_simulation(
+    show=True,
+    max_steps=200,
+    step_delay=0.5,
+    preference_min=0.48,
+    preference_max=0.52,
+):
     if max_steps < 0:
         raise ValueError("max_steps는 0 이상이어야 합니다.")
+    if step_delay < 0:
+        raise ValueError("step_delay는 0 이상이어야 합니다.")
 
-    game_map = GridMap()
+    game_map = GridMap(
+        preference_min=preference_min,
+        preference_max=preference_max,
+    )
     start_position = game_map.player
     goal_position = game_map.goal
-
-    # 퍼셉트론 이동 흔적('*', 'S')이 BFS 결과에 영향을 주지 않도록
-    # 이동을 시작하기 전 원본 격자를 별도로 보관한다.
     original_grid = deepcopy(game_map.grid)
 
-    agent = PerceptronAgent(visit_penalty=visit_penalty)
-    visited_count = {start_position: 1}
-    previous_position = None
-    path = [start_position]
+    agent = PerceptronAgent()
+    visited = {start_position}
+    perceptron_path = [start_position]
     steps = 0
 
     while steps < max_steps and game_map.player != goal_position:
-        move = agent.choose_move(
+        decision = agent.choose_move(
             game_map.player,
             goal_position,
             game_map.grid,
-            visited_count,
-            previous_position,
+            game_map.preferences,
+            visited,
         )
 
         if show:
-            _print_step(game_map, steps, agent.last_scores, move)
+            _print_step(game_map, steps, decision)
+            time.sleep(step_delay)
 
+        move = decision["move"]
         if move is None:
             break
 
         dr, dc = DIRECTIONS[move]
-        r, c = game_map.player
-        next_position = (r + dr, c + dc)
+        row, col = game_map.player
+        next_position = (row + dr, col + dc)
 
-        if game_map.grid[r][c] != "F":
-            game_map.grid[r][c] = "*"
-
-        previous_position = game_map.player
+        game_map.grid[row][col] = "*"
         game_map.player = next_position
-        path.append(next_position)
+        visited.add(next_position)
+        perceptron_path.append(next_position)
         steps += 1
 
-        visited_count[next_position] = visited_count.get(next_position, 0) + 1
-        nr, nc = next_position
-        game_map.grid[nr][nc] = "S"
+        next_row, next_col = next_position
+        game_map.grid[next_row][next_col] = "S"
 
     success = game_map.player == goal_position
     bfs_result = bfs_steps(original_grid, start_position, goal_position)
@@ -95,7 +119,6 @@ def run_simulation(show=True, max_steps=200, visit_penalty=2):
     if show:
         print("\n====================")
         print("시뮬레이션 종료")
-        print(f"현재 위치: {game_map.player}")
         game_map.display()
         print(f"성공 여부: {success}")
         print(f"퍼셉트론 이동 횟수: {steps}")
@@ -107,6 +130,8 @@ def run_simulation(show=True, max_steps=200, visit_penalty=2):
         "perceptron_steps": steps,
         "bfs_steps": bfs_result,
         "difference": difference,
-        "visited": len(visited_count),
-        "path": path,
+        "visited": len(visited),
+        "perceptron_path": perceptron_path,
+        "start": start_position,
+        "goal": goal_position,
     }

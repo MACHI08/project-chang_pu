@@ -1,61 +1,98 @@
 import random
+
 from pathfinding import is_reachable
 
 
 class GridMap:
-
-    def __init__(self, size=10, obstacle_count=15): # 2번째 칼럼의 size를 수정하면 맵 사이즈도 같이 변경됨
-
-        self.size = size
-
-        while True:
-
-            # 빈 맵 생성
-            self.grid = [["." for _ in range(size)] for _ in range(size)]
-
-            # 시작 위치 생성
-            self.player = (
-                random.randint(0, size - 1),
-                random.randint(0, size - 1)
+    def __init__(
+        self,
+        size=10,
+        obstacle_count=15,
+        preference_min=0.48,
+        preference_max=0.52,
+    ):
+        if size <= 0:
+            raise ValueError("size는 0보다 커야 합니다.")
+        if obstacle_count < 0:
+            raise ValueError("obstacle_count는 0 이상이어야 합니다.")
+        if not 0.0 <= preference_min <= preference_max <= 1.0:
+            raise ValueError(
+                "선호도 범위는 0.0 <= preference_min <= "
+                "preference_max <= 1.0이어야 합니다."
             )
 
-            # 목표 위치 생성 (시작 위치와 겹치지 않게)
-            while True:
+        self.size = size
+        self.preference_min = preference_min
+        self.preference_max = preference_max
 
+        for _ in range(1000):
+            self.grid = [["." for _ in range(size)] for _ in range(size)]
+            self.preferences = [
+                [
+                    random.uniform(preference_min, preference_max)
+                    for _ in range(size)
+                ]
+                for _ in range(size)
+            ]
+
+            self.player = (
+                random.randint(0, size - 1),
+                random.randint(0, size - 1),
+            )
+
+            self.goal = self.player
+            while self.goal == self.player:
                 self.goal = (
                     random.randint(0, size - 1),
-                    random.randint(0, size - 1)
+                    random.randint(0, size - 1),
                 )
 
-                if self.goal != self.player:
-                    break
+            obstacle_positions = self._create_spaced_obstacles(obstacle_count)
+            if obstacle_positions is None:
+                continue
 
-            # 장애물 생성
-            count = 0
+            for row, col in obstacle_positions:
+                self.grid[row][col] = "#"
 
-            while count < obstacle_count:
+            player_row, player_col = self.player
+            goal_row, goal_col = self.goal
+            self.grid[player_row][player_col] = "S"
+            self.grid[goal_row][goal_col] = "F"
 
-                r = random.randint(0, size - 1)
-                c = random.randint(0, size - 1)
-
-                if (r, c) != self.player and (r, c) != self.goal:
-
-                    if self.grid[r][c] == ".":
-                        self.grid[r][c] = "#"
-                        count += 1
-
-            # 시작 위치와 목표 위치 표시
-            pr, pc = self.player
-            gr, gc = self.goal
-
-            self.grid[pr][pc] = "S"
-            self.grid[gr][gc] = "F"
-
-            # 도달 가능한 맵이면 종료
             if is_reachable(self.grid, self.player, self.goal):
-                break
+                return
+
+        raise RuntimeError(
+            "조건을 만족하는 맵을 생성하지 못했습니다. "
+            "맵 크기 또는 장애물 수를 조정하세요."
+        )
+
+    def _create_spaced_obstacles(self, obstacle_count):
+        candidates = [
+            (row, col)
+            for row in range(self.size)
+            for col in range(self.size)
+            if (row, col) not in {self.player, self.goal}
+        ]
+        random.shuffle(candidates)
+
+        obstacles = []
+        for position in candidates:
+            if all(
+                max(
+                    abs(position[0] - other[0]),
+                    abs(position[1] - other[1]),
+                )
+                > 1
+                for other in obstacles
+            ):
+                obstacles.append(position)
+
+                if len(obstacles) == obstacle_count:
+                    return obstacles
+
+        return None
 
     def display(self):
-
         for row in self.grid:
             print(" ".join(row))
