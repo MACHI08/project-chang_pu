@@ -15,6 +15,9 @@ def _save_visualization(results, logs_dir=DEFAULT_LOGS_DIR):
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
+    plt.rcParams["font.family"] = "Malgun Gothic"
+    plt.rcParams["axes.unicode_minus"] = False
+
     logs_path = Path(logs_dir)
     logs_path.mkdir(parents=True, exist_ok=True)
 
@@ -51,28 +54,28 @@ def _save_visualization(results, logs_dir=DEFAULT_LOGS_DIR):
 
     figure, axes = plt.subplots(2, 2, figsize=(15, 10))
     figure.suptitle(
-        f"Perceptron vs BFS - {len(results)} Experiments",
+        f"퍼셉트론과 BFS 비교 - {len(results)}회 실험",
         fontsize=18,
         fontweight="bold",
     )
 
     axes[0, 0].bar(
-        ["Success", "Failure"],
+        ["성공", "실패"],
         [success_count, failure_count],
         color=["#2E8B57", "#D9534F"],
     )
-    axes[0, 0].set_title(f"Success Rate: {success_rate:.1f}%")
-    axes[0, 0].set_ylabel("Number of experiments")
+    axes[0, 0].set_title(f"성공률: {success_rate:.1f}%")
+    axes[0, 0].set_ylabel("실험 횟수")
     axes[0, 0].grid(axis="y", alpha=0.25)
 
     averages = [perceptron_average, bfs_average]
     bars = axes[0, 1].bar(
-        ["Perceptron\n(success only)", "BFS\n(all maps)"],
+        ["퍼셉트론\n(성공 실험)", "BFS\n(전체 맵)"],
         averages,
         color=["#4472C4", "#ED7D31"],
     )
-    axes[0, 1].set_title("Average Steps")
-    axes[0, 1].set_ylabel("Steps")
+    axes[0, 1].set_title("평균 이동 횟수")
+    axes[0, 1].set_ylabel("이동 횟수")
     axes[0, 1].grid(axis="y", alpha=0.25)
     for bar, value in zip(bars, averages):
         axes[0, 1].text(
@@ -88,7 +91,7 @@ def _save_visualization(results, logs_dir=DEFAULT_LOGS_DIR):
         perceptron_steps,
         color="#4472C4",
         linewidth=1.2,
-        label="Perceptron",
+        label="퍼셉트론",
     )
     axes[1, 0].plot(
         experiment_ids,
@@ -104,12 +107,12 @@ def _save_visualization(results, logs_dir=DEFAULT_LOGS_DIR):
             color="#D9534F",
             marker="x",
             s=35,
-            label="Failure",
+            label="실패",
             zorder=3,
         )
-    axes[1, 0].set_title("Steps by Experiment")
-    axes[1, 0].set_xlabel("Experiment ID")
-    axes[1, 0].set_ylabel("Steps")
+    axes[1, 0].set_title("실험별 이동 횟수")
+    axes[1, 0].set_xlabel("실험 번호")
+    axes[1, 0].set_ylabel("이동 횟수")
     axes[1, 0].legend()
     axes[1, 0].grid(alpha=0.25)
 
@@ -127,18 +130,18 @@ def _save_visualization(results, logs_dir=DEFAULT_LOGS_DIR):
             color="#C00000",
             linestyle="--",
             linewidth=1.5,
-            label=f"Mean: {average_difference:.2f}",
+            label=f"평균: {average_difference:.2f}",
         )
         axes[1, 1].legend()
-        axes[1, 1].set_title("Perceptron - BFS Step Difference")
-        axes[1, 1].set_xlabel("Additional steps")
-        axes[1, 1].set_ylabel("Frequency")
+        axes[1, 1].set_title("퍼셉트론과 BFS의 이동 횟수 차이")
+        axes[1, 1].set_xlabel("BFS 대비 추가 이동 횟수")
+        axes[1, 1].set_ylabel("빈도")
         axes[1, 1].grid(axis="y", alpha=0.25)
     else:
         axes[1, 1].text(
             0.5,
             0.5,
-            "No successful perceptron runs",
+            "성공한 퍼셉트론 실험 없음",
             ha="center",
             va="center",
             fontsize=13,
@@ -149,8 +152,8 @@ def _save_visualization(results, logs_dir=DEFAULT_LOGS_DIR):
         0.5,
         0.01,
         (
-            f"Total: {len(results)}   |   Success: {success_count}   |   "
-            f"Failure: {failure_count}   |   Success rate: {success_rate:.1f}%"
+            f"전체: {len(results)}   |   성공: {success_count}   |   "
+            f"실패: {failure_count}   |   성공률: {success_rate:.1f}%"
         ),
         ha="center",
         fontsize=11,
