@@ -1,21 +1,22 @@
 @echo off
-chcp 65001 >nul
+setlocal
 title CHANGPU SYSTEM
 
 cd /d "%~dp0"
 
-if not exist ".venv\Scripts\python.exe" (
-    echo [ERROR] 프로젝트 가상환경을 찾을 수 없습니다.
-    echo 먼저 INSTALL.bat을 실행하세요.
-    pause
-    exit /b 1
-)
+if not exist ".venv\Scripts\python.exe" goto venv_missing
 
-".venv\Scripts\python.exe" main.py
+".venv\Scripts\python.exe" "main.py"
+set "APP_EXIT_CODE=%ERRORLEVEL%"
 
-if errorlevel 1 (
-    echo.
-    echo [ERROR] 프로그램 실행 중 오류가 발생했습니다.
-)
+if not "%APP_EXIT_CODE%"=="0" echo [ERROR] The program exited with an error.
 
+echo.
 pause
+exit /b %APP_EXIT_CODE%
+
+:venv_missing
+echo [ERROR] Project virtual environment was not found.
+echo Run INSTALL.bat first.
+pause
+exit /b 1
