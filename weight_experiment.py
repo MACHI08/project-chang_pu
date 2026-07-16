@@ -171,17 +171,17 @@ def run_weight_experiments(count=500):
     if count <= 0:
         raise ValueError("count는 0보다 커야 합니다.")
 
-    preference_summaries = [
+    preference_summaries = [ # 선호도에 대한 가중치 값들
         _run_weight_case(count, "무시 0", preference_weight=0.0),
         _run_weight_case(count, "기본 1.0", preference_weight=1.0),
         _run_weight_case(count, "강함 10", preference_weight=10.0),
         _run_weight_case(count, "선호 우선 50", preference_weight=50.0),
     ]
-    distance_summaries = [
-        _run_weight_case(count, "약함 -0.5", distance_weight=-0.5),
+    distance_summaries = [ # 거리 비교에 관한 가중치 값들
+        _run_weight_case(count, "거리 무시 0", distance_weight=0.0),
+        _run_weight_case(count, "약함 -0.1", distance_weight=-0.1),
         _run_weight_case(count, "기본 -1.0", distance_weight=-1.0),
-        _run_weight_case(count, "강함 -1.5", distance_weight=-1.5),
-        _run_weight_case(count, "매우 강함 -2.0", distance_weight=-2.0),
+        _run_weight_case(count, "거리 우선 -10", distance_weight=-10.0),
     ]
 
     preference_output_path = _save_weight_visualization(
